@@ -7,7 +7,7 @@ import scipy.io
 import numpy as np
 
 max_iter = 10
-spar_ratio = range(0.05, 0.05, 0.9)
+spar_ratio = np.arange(0.05, 0.05, 0.9)
 
 mat_size = 32
 
@@ -17,7 +17,8 @@ class CustomRandomState(np.random.RandomState):
         return i - i % 2
 
     for i in range(1, max_iter):
-	for ratio in spar_ratio:
+        for ratio in spar_ratio:
+
             # Generate
             np.random.seed(1)
             rs = CustomRandomState()
@@ -28,4 +29,6 @@ class CustomRandomState(np.random.RandomState):
 
             # Export
             scipy.io.mmwrite("s{0}-r{1}-mat.mtx".format(), S)
+
+        mat_size = mat_size * 2
 
