@@ -242,7 +242,7 @@ int main(int argc, char* argv[])
                 M, N, NZ, device_JR, device_JC, device_AA_sorted,
                 CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ONE, CUDA_R_32F));
 #endif
-#ifdfef CSR
+#ifdef CSR
         CUSPARSE_ERR(cusparseCreateCsr(&sp_mtx,
                 M, N, NZ, device_JR, device_JC, device_AA_sorted,
                 CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ONE, CUDA_R_32F));
