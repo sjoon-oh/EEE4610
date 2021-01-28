@@ -1,2 +1,2 @@
-git clone https://github.com/shih0403/cr2
+git clone https://github.com/shin0403/cr2_accel
 
