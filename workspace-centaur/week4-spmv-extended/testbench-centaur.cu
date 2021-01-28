@@ -45,7 +45,7 @@
 // Author: SukJoon Oh
 // acoustikue@yonsei.ac.kr
 // Reads MM file.
-void read_matrix(int* argJR, int* argJC, float* argAA, int* argP, char* filename, int* argM, int* argN, int* argNZ) {
+void read_matrix(int** argJR, int** argJC, float** argAA, int** argP, char* filename, int* argM, int* argN, int* argNZ) {
 
 	int m = 0;
 	int n = 0;
@@ -56,7 +56,7 @@ void read_matrix(int* argJR, int* argJC, float* argAA, int* argP, char* filename
 	 
 	MM_typecode matrix_code;
 	
-	printf("Reading %s : \n", filename);
+	printf("Reading %s... \n", filename);
 
 	// Read banner, type, etc essential infos
 	// Verification steps are ignored.
@@ -67,10 +67,10 @@ void read_matrix(int* argJR, int* argJC, float* argAA, int* argP, char* filename
 	*argN = n;
 	*argNZ = nz;
 
-	argJR	    = (int*)malloc(nz * sizeof(int));
-	argJC	    = (int*)malloc(nz * sizeof(int));
-    argAA	    = (float*)malloc(nz * sizeof(float));
-	argP	    = (int*)malloc(nz * sizeof(int));
+	*argJR	    = (int*)malloc(nz * sizeof(int));
+	*argJC	    = (int*)malloc(nz * sizeof(int));
+    *argAA	    = (float*)malloc(nz * sizeof(float));
+	*argP	    = (int*)malloc(nz * sizeof(int));
 
 	// COO format
 	for (register int i = 0; i < nz; i++)
@@ -79,10 +79,10 @@ void read_matrix(int* argJR, int* argJC, float* argAA, int* argP, char* filename
 	fclose(MTX);
 	
 	printf("(File info)\tm : %d, n : %d, nz : %d\n", m, n, nz);
-	printf("Printing samples...");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", argJR[i]); printf("\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", argJC[i]); printf("\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", argAA[i]); printf("\n");
+	printf("Printing samples...\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", *argJR[i]); printf("\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", *argJC[i]); printf("\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0lf", *argAA[i]); printf("\n");
 }
 
 
@@ -137,8 +137,8 @@ int main(int argc, char* argv[])
     if (argc >= 4) { printf("Too many argmuments.\nProgram exit.\n"); exit(0); }
 
     test_iterations = atoi(argv[1]);
-    printf("Target iterations: %d\n", test_iterations);
-	printf("File name: %s\n", argv[2]);
+    printf("(arg1) Target iterations: %d\n", test_iterations);
+	printf("(arg2) File name: %s\n", argv[2]);
 
 	// ---- Step 1. Load info ----
 	int* host_JR			= NULL;
