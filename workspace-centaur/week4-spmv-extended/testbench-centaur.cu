@@ -77,12 +77,6 @@ void read_matrix(int** argJR, int** argJC, float** argAA, int** argP, char* file
 		fscanf(MTX, "%d %d %f\n", &argJR[i], &argJC[i], &argAA[i]);
 
 	fclose(MTX);
-	
-	printf("(File info)\tm : %d, n : %d, nz : %d\n", m, n, nz);
-	printf("Printing samples...\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", *argJR[i]); printf("\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", *argJC[i]); printf("\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0lf", *argAA[i]); printf("\n");
 }
 
 
@@ -146,8 +140,13 @@ int main(int argc, char* argv[])
     float* host_AA			= NULL;
 	int* host_P				= NULL;
 
-    read_matrix(&host_JR, &host_JC, &host_AA, &host_P, argv[2], &M, &N, &NZ); // prepare elements
-
+	read_matrix(&host_JR, &host_JC, &host_AA, &host_P, argv[2], &M, &N, &NZ); // prepare elements
+	
+	printf("(File info)\tm : %d, n : %d, nz : %d\n", M, N, NZ);
+	printf("Printing samples...\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", argJR[i]); printf("\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", argJC[i]); printf("\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0lf", argAA[i]); printf("\n");
 	printf("File successfully loaded.\n");
 
 	// ---- Step 2. Handle create, bind a stream ---- 
