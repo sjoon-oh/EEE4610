@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
     float* host_AA			= NULL;
 	int* host_P				= NULL;
 
-    read_matrix(host_JR, host_JC, host_AA, host_P, argv[2], &M, &N, &NZ); // prepare elements
+    read_matrix(&host_JR, &host_JC, &host_AA, &host_P, argv[2], &M, &N, &NZ); // prepare elements
 
 	printf("File successfully loaded.\n");
 
