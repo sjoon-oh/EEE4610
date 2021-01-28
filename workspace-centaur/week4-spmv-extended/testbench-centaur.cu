@@ -75,9 +75,10 @@ int main(int argc, char* argv[])
 	// ---- Step 1. Load info ----	
 	printf("(File info)\tm : %d, n : %d, nz : %d\n", M, N, NZ);
 	printf("Printing samples...\n");
+	printf("JR: \n");
 	for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
+	printf("JC: \n"); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
+	printf("AA: \n"); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
 	printf("File successfully loaded.\n");
 
 	// ---- Step 2. Handle create, bind a stream ---- 
@@ -156,7 +157,14 @@ int main(int argc, char* argv[])
     for (int i = 0; i < NZ; i++) t_JR[host_JR[i]]++;
 
     free(host_JR);
-    host_JR = t_JR; // switch
+	host_JR = t_JR; // switch
+	
+	printf("Done.\n");
+	printf("JR: \n");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
+	printf("JC: \n"); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
+	printf("AA: \n"); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
+
 #endif
 
     {
@@ -164,11 +172,12 @@ int main(int argc, char* argv[])
         buffer		            = NULL;
         buffer_size             = 0;
 
+		float average			= 0;
         float elapsed           = 0;
         cudaEvent_t start, stop;
 
 #ifdef CUSPARSE
-        printf("Test: CUSPARSE");
+        printf("Test: CUSPARSE\n");
         // ---- Step 7. Define variables
 		const float alpha	    = 1;
 		const float beta	    = 0;
@@ -224,7 +233,7 @@ int main(int argc, char* argv[])
 #endif
         CUDA_ERR(cudaMalloc(&buffer, buffer_size));
 
-
+		printf("Iteration start.\n");
         for (register int i = 0; i < test_iterations; i++) {
             cudaEventCreate(&start);
             cudaEventCreate(&stop);
@@ -246,10 +255,13 @@ int main(int argc, char* argv[])
             cudaEventSynchronize(stop);
             cudaEventElapsedTime(&elapsed, start, stop);
 
-            printf("Iteration %3d, Elapsed: %fms\n", elapsed);
-            elapsed = 0;
+            printf("   Iter %3d, Elapsed: %fms\n", i + 1, elapsed);
+			average += elapsed;
+			elapsed = 0;
+		}		
 
-        }
+		printf("Iteration end.\n");
+		printf("   Average elapsed time: %lf\n", average / test_iterations);
 
 		// ---- Step 11. Destroy ----
 		CUSPARSE_ERR(cusparseDestroySpMat(sp_mtx));
@@ -259,6 +271,7 @@ int main(int argc, char* argv[])
         // ---- Step 10. Fetch the result ----
         CUDA_ERR(cudaMemcpy(host_y, device_y, N * sizeof(float), cudaMemcpyDeviceToHost));
 
+		printf("Host memory check...\n");
         for (int i = 0; i < 10; i++) 
             printf("%9.1f", host_y[i]); // Check
         
@@ -279,10 +292,6 @@ int main(int argc, char* argv[])
 
 #endif
     }
-
-
-
-
 
     free(host_JR);
 	free(host_JC);
