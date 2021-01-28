@@ -75,10 +75,10 @@ int main(int argc, char* argv[])
 	// ---- Step 1. Load info ----	
 	printf("(File info)\tm : %d, n : %d, nz : %d\n", M, N, NZ);
 	printf("Printing samples...\n");
-	printf("JR: \n");
+	printf("JR: ");
 	for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
-	printf("JC: \n"); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
-	printf("AA: \n"); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
+	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
+	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
 	printf("File successfully loaded.\n");
 
 	// ---- Step 2. Handle create, bind a stream ---- 
@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
 	CUDA_ERR(cudaMemcpy(device_AA, host_AA, sizeof(float) * NZ, cudaMemcpyHostToDevice));
 	CUDA_ERR(cudaDeviceSynchronize());
 
-	printf("Allocation/Memcopy to GPU done.");
+	printf("Allocation/Memcopy to GPU done.\n");
 
 	// ---- Step 4. Setup permutation vector P to Identity ---- 
 	CUSPARSE_ERR(cusparseCreateIdentityPermutation(handle, NZ, device_P));
@@ -160,10 +160,10 @@ int main(int argc, char* argv[])
 	host_JR = t_JR; // switch
 	
 	printf("Done.\n");
-	printf("JR: \n");
+	printf("JR: ");
 	for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
-	printf("JC: \n"); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
-	printf("AA: \n"); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
+	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
+	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
 
 #endif
 
@@ -249,7 +249,8 @@ int main(int argc, char* argv[])
             CUSPARSE_ERR(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
                 &alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
                 CUSPARSE_CSRMV_ALG1, buffer));
-            
+#endif
+
             // Record
             cudaEventRecord(stop); // timer end
             cudaEventSynchronize(stop);
@@ -273,7 +274,8 @@ int main(int argc, char* argv[])
 
 		printf("Host memory check...\n");
         for (int i = 0; i < 10; i++) 
-            printf("%9.1f", host_y[i]); // Check
+			printf("%9.1f", host_y[i]); // Check
+		printf("\n");
         
         // ---- Step 12. Return resources ----
 		if (device_JR) cudaFree(device_JR);
@@ -286,7 +288,6 @@ int main(int argc, char* argv[])
 
         cudaEventDestroy(start);
 		cudaEventDestroy(stop);
-#endif
 #endif
 #ifndef CUSPARSE
 
