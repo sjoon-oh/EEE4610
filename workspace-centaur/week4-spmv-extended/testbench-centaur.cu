@@ -75,9 +75,9 @@ int main(int argc, char* argv[])
 	// ---- Step 1. Load info ----	
 	printf("(File info)\tm : %d, n : %d, nz : %d\n", M, N, NZ);
 	printf("Printing samples...\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", argJR[i]); printf("\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", argJC[i]); printf("\n");
-	for (register int i = 0; i < 10; i++) printf("%4.0lf", argAA[i]); printf("\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
 	printf("File successfully loaded.\n");
 
 	// ---- Step 2. Handle create, bind a stream ---- 
