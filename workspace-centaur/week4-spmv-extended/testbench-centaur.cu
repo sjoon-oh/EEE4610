@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
 		host_P	    = (int*)malloc(NZ * sizeof(int));
 
 			// COO format
-		for (register int i = 0; i < nz; i++)
+		for (register int i = 0; i < NZ; i++)
 			fscanf(MTX, "%d %d %f\n", &host_JR[i], &host_JC[i], &host_AA[i]);
 
 		fclose(MTX);
