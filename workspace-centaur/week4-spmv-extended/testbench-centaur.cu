@@ -48,11 +48,11 @@ int main(int argc, char* argv[])
 	// Reading file
 	{
 		FILE* MTX;
-		MTX = fopen(filename, "r");
+		MTX = fopen(argv[2], "r");
 		
 		MM_typecode matrix_code;
 		
-		printf("Reading %s... \n", filename);
+		printf("Reading %s... \n", argv[2]);
 
 		// Read banner, type, etc essential infos
 		// Verification steps are ignored.
