@@ -78,7 +78,11 @@ void read_matrix(int* argJR, int* argJC, float* argAA, int* argP, char* filename
 
 	fclose(MTX);
 	
-	printf("File info :\n\tm : %d\n\tn : %d\n\tnz : %d\n", m, n, nz);
+	printf("(File info)\tm : %d, n : %d, nz : %d\n", m, n, nz);
+	printf("Printing samples...");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", argJR[i]); printf("\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", argJC[i]); printf("\n");
+	for (register int i = 0; i < 10; i++) printf("%4.0d", argAA[i]); printf("\n");
 }
 
 
@@ -167,7 +171,6 @@ int main(int argc, char* argv[])
 
 	// ---- Step 3. Allocate Buffer ---- 
 	CUSPARSE_ERR(cusparseXcoosort_bufferSizeExt(handle, M, N, NZ, device_JR, device_JC, &buffer_size));
-	
 	printf("Buffer allocation for cusparseXcoosortByRow : %ld Byte\n", buffer_size);
 
 	CUDA_ERR(cudaMalloc((void**)&device_JR, sizeof(int) * NZ));
