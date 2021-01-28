@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
 
 			// COO format
 		for (register int i = 0; i < nz; i++)
-			fscanf(MTX, "%d %d %f\n", &argJR[i], &argJC[i], &argAA[i]);
+			fscanf(MTX, "%d %d %f\n", &host_JR[i], &host_JC[i], &host_AA[i]);
 
 		fclose(MTX);
 	}
