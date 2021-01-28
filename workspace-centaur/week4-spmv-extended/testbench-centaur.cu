@@ -11,6 +11,8 @@
 #include <stdlib.h>
 
 #include "mmio.h"
+#include "errchk.h"
+#include "spmv_kernel.h"
 
 // Option settings
 
@@ -21,111 +23,20 @@
 // #define SCALAR_KERNEL
 // #define VECTOR_KERNEL
 
-#define CUDA_ERR(func)                                                         \
-{                                                                              \
-    cudaError_t status = (func);                                               \
-    if (status != cudaSuccess) {                                               \
-        printf("CUDA API failed at line %d with error: %s (%d)\n",             \
-               __LINE__, cudaGetErrorString(status), status);                  \
-        return EXIT_FAILURE;                                                   \
-    }                                                                          \
-}
-
-#define CUSPARSE_ERR(func)                                                     \
-{                                                                              \
-    cusparseStatus_t status = (func);                                          \
-    if (status != CUSPARSE_STATUS_SUCCESS) {                                   \
-        printf("CUSPARSE API failed at line %d with error: %s (%d)\n",         \
-               __LINE__, cusparseGetErrorString(status), status);              \
-        return EXIT_FAILURE;                                                   \
-    }                                                                          \
-}
-
-
-// Author: SukJoon Oh
-// acoustikue@yonsei.ac.kr
-// Reads MM file.
-void read_matrix(int** argJR, int** argJC, float** argAA, int** argP, char* filename, int* argM, int* argN, int* argNZ) {
-
-	int m = 0;
-	int n = 0;
-	int nz = 0;
-
-	FILE* MTX;
-	MTX = fopen(filename, "r");
-	 
-	MM_typecode matrix_code;
-	
-	printf("Reading %s... \n", filename);
-
-	// Read banner, type, etc essential infos
-	// Verification steps are ignored.
-	if (mm_read_banner(MTX, &matrix_code) != 0) exit(1);
-	mm_read_mtx_crd_size(MTX, &m, &n, &nz); // Over max 1025
-
-	*argM = m;
-	*argN = n;
-	*argNZ = nz;
-
-	*argJR	    = (int*)malloc(nz * sizeof(int));
-	*argJC	    = (int*)malloc(nz * sizeof(int));
-    *argAA	    = (float*)malloc(nz * sizeof(float));
-	*argP	    = (int*)malloc(nz * sizeof(int));
-
-	// COO format
-	for (register int i = 0; i < nz; i++)
-		fscanf(MTX, "%d %d %f\n", &argJR[i], &argJC[i], &argAA[i]);
-
-	fclose(MTX);
-}
-
-
-// 
-// CSR scalar kernel function
-__global__ void ker_csr_spmv_scalar(
-	const int* argJR, const int* argJC, const float* argAA,
-	const float* arg_x, float* arg_y) {
-
-	int idx		= blockDim.x * blockIdx.x + threadIdx.x;
-	float sum	= 0;
-
-	for (int i = argJR[idx] - 1; i < argJR[idx + 1] - 1; i++)
-		sum		+= (argAA[i] * arg_x[argJC[i] - 1]);
-
-	arg_y[idx]	+= sum;
-};
-
-
-//
-// CSR vector kernel function
-__global__ void ker_csr_spmv_vector(
-	const int* argJR, const int* argJC, const float* argAA,
-	const float* arg_x, float* arg_y) {
-
-	// Thread : 32 * M
-
-	int tid		= blockDim.x * blockIdx.x + threadIdx.x;
-	int wid		= tid / 32;
-	int lidx	= tid & 31;
-	float sum	= 0;
-
-	for (int i = argJR[wid] - 1 + lidx; i < argJR[wid + 1] - 1; i += 32)
-		sum += argAA[i] * arg_x[argJC[i] - 1];
-
-	for (int i = 16; i > 0; i /= 2)
-		sum += __shfl_down_sync(0xFFFFFFFF, sum, i);
-
-	if (lidx == 0) arg_y[wid] = sum;
-};
-
 // ---- main() ----
 // Entry
 int main(int argc, char* argv[])
 {
-    int test_iterations = 0;
+	int test_iterations = 0;
+	
 	int N = 0;
 	int M = 0;
 	int NZ = 0;
+
+	int* host_JR			= NULL;
+	int* host_JC			= NULL;
+    float* host_AA			= NULL;
+	int* host_P				= NULL;
 
     if (argc == 1 || argc == 2) { printf("Too few arguments.\nProgram exit.\n"); exit(0); }
     if (argc >= 4) { printf("Too many argmuments.\nProgram exit.\n"); exit(0); }
@@ -134,14 +45,34 @@ int main(int argc, char* argv[])
     printf("(arg1) Target iterations: %d\n", test_iterations);
 	printf("(arg2) File name: %s\n", argv[2]);
 
-	// ---- Step 1. Load info ----
-	int* host_JR			= NULL;
-	int* host_JC			= NULL;
-    float* host_AA			= NULL;
-	int* host_P				= NULL;
+	// Reading file
+	{
+		FILE* MTX;
+		MTX = fopen(filename, "r");
+		
+		MM_typecode matrix_code;
+		
+		printf("Reading %s... \n", filename);
 
-	read_matrix(&host_JR, &host_JC, &host_AA, &host_P, argv[2], &M, &N, &NZ); // prepare elements
-	
+		// Read banner, type, etc essential infos
+		// Verification steps are ignored.
+		if (mm_read_banner(MTX, &matrix_code) != 0) exit(1);
+		mm_read_mtx_crd_size(MTX, &M, &N, &NZ); // Over max 1025
+
+		host_JR	    = (int*)malloc(NZ * sizeof(int));
+		host_JC	    = (int*)malloc(NZ * sizeof(int));
+		host_AA	    = (float*)malloc(NZ * sizeof(float));
+		host_P	    = (int*)malloc(NZ * sizeof(int));
+
+			// COO format
+		for (register int i = 0; i < nz; i++)
+			fscanf(MTX, "%d %d %f\n", &argJR[i], &argJC[i], &argAA[i]);
+
+		fclose(MTX);
+	}
+
+
+	// ---- Step 1. Load info ----	
 	printf("(File info)\tm : %d, n : %d, nz : %d\n", M, N, NZ);
 	printf("Printing samples...\n");
 	for (register int i = 0; i < 10; i++) printf("%4.0d", argJR[i]); printf("\n");
