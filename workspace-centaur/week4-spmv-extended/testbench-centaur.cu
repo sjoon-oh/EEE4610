@@ -98,8 +98,6 @@ __global__ void ker_csr_spmv_scalar(
 };
 
 
-
-
 //
 // CSR vector kernel function
 __global__ void ker_csr_spmv_vector(
@@ -139,10 +137,10 @@ int main(int argc, char* argv[])
 	printf("File name: %s\n", argv[2]);
 
 	// ---- Step 1. Load info ----
-	int* host_JR;//	    = (int*)malloc(NZ * sizeof(int));
-	int* host_JC;//	    = (int*)malloc(NZ * sizeof(int));
-    float* host_AA;//	    = (float*)malloc(NZ * sizeof(float));
-	int* host_P;//		    = (int*)malloc(NZ * sizeof(int));
+	int* host_JR			= NULL;
+	int* host_JC			= NULL;
+    float* host_AA			= NULL;
+	int* host_P				= NULL;
 
     read_matrix(host_JR, host_JC, host_AA, host_P, argv[2], &M, &N, &NZ); // prepare elements
 
@@ -170,7 +168,7 @@ int main(int argc, char* argv[])
 	// ---- Step 3. Allocate Buffer ---- 
 	CUSPARSE_ERR(cusparseXcoosort_bufferSizeExt(handle, M, N, NZ, device_JR, device_JC, &buffer_size));
 	
-	printf("Buffer allocation for cusparseXcoosort : %ld\n", buffer_size);
+	printf("Buffer allocation for cusparseXcoosortByRow : %ld Byte\n", buffer_size);
 
 	CUDA_ERR(cudaMalloc((void**)&device_JR, sizeof(int) * NZ));
 	CUDA_ERR(cudaMalloc((void**)&device_JC, sizeof(int) * NZ));
@@ -191,6 +189,7 @@ int main(int argc, char* argv[])
 
 	// ---- Step 5. Sort ---- 
 	CUSPARSE_ERR(cusparseXcoosortByRow(handle, M, N, NZ, device_JR, device_JC, device_P, buffer));
+	printf("cusparseXcoosortByRow done.\n");
 
 	// Gather
 	CUSPARSE_ERR(cusparseSgthr(handle, NZ, device_AA, device_AA_sorted, device_P, CUSPARSE_INDEX_BASE_ZERO));
