@@ -152,6 +152,8 @@ int main(int argc, char* argv[])
     int* t_JR	    = (int*)calloc((M + 1), sizeof(int));
 	for (int i = 0; i < M + 1; i++) t_JR[i]++; 
 	for (int i = 0; i < NZ; i++) t_JR[host_JR[i]]++;
+	for (int i = 0; i < M; i++)	t_JR[i + 1] += (t_JR[i] - 1);
+
 
     free(host_JR);
 	host_JR = t_JR; // switch
