@@ -316,11 +316,13 @@ int main(int argc, char* argv[])
 		printf("Host memory check...\nhost_y: "); for (int i = 0; i < 10; i++) printf("%9.1f", host_y[i]); printf("\n");
 
 		// ---- Step 11. Destroy ----
+#ifdef CUSPARSE
 		CUSPARSE_ERR(cusparseDestroySpMat(sp_mtx));
 		CUSPARSE_ERR(cusparseDestroyDnVec(dn_x));
         CUSPARSE_ERR(cusparseDestroyDnVec(dn_y));
-        
-        // ---- Step 12. Return resources ----
+#endif
+	  
+		// ---- Step 12. Return resources ----
 		if (device_JR) 			cudaFree(device_JR);
 		if (device_JC) 			cudaFree(device_JC);
 		if (device_AA_sorted) 	cudaFree(device_AA_sorted);
