@@ -274,6 +274,8 @@ int main(int argc, char* argv[])
 				while (block_num * 1024 < M) block_num++;
 				thread_num = 1024;
 			}
+
+			printf("Block %d, Threads %d\n", block_num, thread_num);
 			
 			ker_csr_spmv_scalar<<<block_num, thread_num>>>(device_JR, device_JC, device_AA_sorted, device_x, device_y);
 #endif
@@ -287,6 +289,8 @@ int main(int argc, char* argv[])
 				while (block_num * 1024 < 32 * M) block_num++;
 				thread_num = 1024;
 			}
+
+			printf("Block %d, Threads %d\n", block_num, thread_num);
 			
 			ker_csr_spmv_vector<<<block_num, thread_num>>>(device_JR, device_JC, device_AA_sorted, device_x, device_y);
 
