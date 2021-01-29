@@ -180,7 +180,10 @@ int main(int argc, char* argv[])
         cudaEvent_t start, stop;
 
 #ifdef CUSPARSE
-        printf("Test: CUSPARSE\n");
+		printf("Test: CUSPARSE\n");
+#else
+		printf("Test: KERNEL\n");
+#endif
         // ---- Step 7. Define variables
 		const float alpha	    = 1;
 		const float beta	    = 0;
@@ -209,6 +212,8 @@ int main(int argc, char* argv[])
 		CUDA_ERR(cudaMemcpy(device_JR, host_JR, sizeof(int) * (M + 1), cudaMemcpyHostToDevice));
 		CUDA_ERR(cudaMemcpy(device_JC, host_JC, sizeof(int) * NZ, cudaMemcpyHostToDevice));
 #endif
+
+#ifdef CUSPARSE
 #ifndef CSR // when COO
         CUSPARSE_ERR(cusparseCreateCoo(&sp_mtx, 
                 M, N, NZ, device_JR, device_JC, device_AA_sorted,
@@ -234,7 +239,8 @@ int main(int argc, char* argv[])
 			&alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
 			CUSPARSE_CSRMV_ALG1, &buffer_size));
 #endif
-        CUDA_ERR(cudaMalloc(&buffer, buffer_size));
+		CUDA_ERR(cudaMalloc(&buffer, buffer_size));
+#endif
 
 		printf("Iteration start.\n");
         for (register int i = 0; i < test_iterations; i++) {
@@ -318,7 +324,6 @@ int main(int argc, char* argv[])
 
         cudaEventDestroy(start);
 		cudaEventDestroy(stop);
-#endif
     }
 
     free(host_JR);
