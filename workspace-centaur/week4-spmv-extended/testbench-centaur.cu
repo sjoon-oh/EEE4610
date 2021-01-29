@@ -11,8 +11,8 @@
 #include <stdlib.h>
 
 #include "mmio.h"
-#include "errchk.h"
-#include "spmv_kernel.h"
+#include "errchk.cuh"
+#include "spmv_kernel.cuh"
 
 // Option settings
 
@@ -27,24 +27,37 @@
 // Entry
 int main(int argc, char* argv[])
 {
-	int test_iterations = 0;
+	int test_iterations 	= 0;
 	
-	int N = 0;
-	int M = 0;
-	int NZ = 0;
+	int N 					= 0;
+	int M 					= 0;
+	int NZ 					= 0;
 
 	int* host_JR			= NULL;
 	int* host_JC			= NULL;
     float* host_AA			= NULL;
 	int* host_P				= NULL;
 
+	int* device_JR			= NULL;
+	int* device_JC			= NULL;
+	float* device_AA		= NULL;
+	float* device_AA_sorted	= NULL;
+	int* device_P			= NULL;
+
+	void* buffer			= NULL;
+	size_t buffer_size		= 0;
+
+	cusparseHandle_t handle = NULL;
+	cudaStream_t stream		= NULL;
+
     if (argc == 1 || argc == 2) { printf("Too few arguments.\nProgram exit.\n"); exit(0); }
-    if (argc >= 4) { printf("Too many argmuments.\nProgram exit.\n"); exit(0); }
+    if (argc >= 4) 				{ printf("Too many argmuments.\nProgram exit.\n"); exit(0); }
 
     test_iterations = atoi(argv[1]);
     printf("(arg1) Target iterations: %d\n", test_iterations);
 	printf("(arg2) File name: %s\n", argv[2]);
 
+	//
 	// Reading file
 	{
 		FILE* MTX;
@@ -64,7 +77,6 @@ int main(int argc, char* argv[])
 		host_AA	    = (float*)malloc(NZ * sizeof(float));
 		host_P	    = (int*)malloc(NZ * sizeof(int));
 
-			// COO format
 		for (register int i = 0; i < NZ; i++)
 			fscanf(MTX, "%d %d %f\n", &host_JR[i], &host_JC[i], &host_AA[i]);
 
@@ -75,27 +87,13 @@ int main(int argc, char* argv[])
 	// ---- Step 1. Load info ----	
 	printf("(File info)\tm : %d, n : %d, nz : %d\n", M, N, NZ);
 	printf("Printing samples...\n");
-	printf("JR: ");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
+	printf("JR: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
 	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
 	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
 	printf("File successfully loaded.\n");
 
 	// ---- Step 2. Handle create, bind a stream ---- 
-	int* device_JR			= NULL;
-	int* device_JC			= NULL;
-	float* device_AA		= NULL;
-	float* device_AA_sorted	= NULL;
-	int* device_P			= NULL;
-
-	void* buffer			= NULL;
-	size_t buffer_size		= 0;
-
 	printf("Preparing for cusparseXcoosort...\n");
-
-	cusparseHandle_t handle = NULL;
-	cudaStream_t stream		= NULL;
-
 	CUDA_ERR(cudaStreamCreateWithFlags(&stream, cudaStreamNonBlocking));
 	CUSPARSE_ERR(cusparseCreate(&handle));
 	CUSPARSE_ERR(cusparseSetStream(handle, stream));
@@ -137,31 +135,29 @@ int main(int argc, char* argv[])
     CUDA_ERR(cudaDeviceSynchronize());
     
     // Free memories
-    if (device_P) cudaFree(device_P);
-	if (device_AA) cudaFree(device_AA);
-	if (buffer) cudaFree(buffer);
-	if (handle) cusparseDestroy(handle);
-	if (stream) cudaStreamDestroy(stream);
+    if (device_P) 	cudaFree(device_P);
+	if (device_AA) 	cudaFree(device_AA);
+	if (buffer) 	cudaFree(buffer);
+	if (handle) 	cusparseDestroy(handle);
+	if (stream) 	cudaStreamDestroy(stream);
 
 	free(host_P); // Unnecessary
 
 #ifdef CSR
 	printf("Converting COO to CSR...\n");
 
-	if (device_JR) cudaFree(device_JR);
-	if (device_JC) cudaFree(device_JC);
+	if (device_JR) 	cudaFree(device_JR);
+	if (device_JC) 	cudaFree(device_JC);
 
     int* t_JR	    = (int*)calloc((M + 1), sizeof(int));
-
-    for (int i = 0; i < M + 1; i++) t_JR[i]++; 
-    for (int i = 0; i < NZ; i++) t_JR[host_JR[i]]++;
+	for (int i = 0; i < M + 1; i++) t_JR[i]++; 
+	for (int i = 0; i < NZ; i++) t_JR[host_JR[i]]++;
 
     free(host_JR);
 	host_JR = t_JR; // switch
 	
 	printf("Done.\n");
-	printf("JR: ");
-	for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
+	printf("JR: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
 	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
 	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
 
@@ -206,7 +202,7 @@ int main(int argc, char* argv[])
 		CUDA_ERR(cudaMemcpy(device_JR, host_JR, sizeof(int) * (M + 1), cudaMemcpyHostToDevice));
 		CUDA_ERR(cudaMemcpy(device_JC, host_JC, sizeof(int) * NZ, cudaMemcpyHostToDevice));
 #endif
-#ifndef CSR
+#ifndef CSR // when COO
         CUSPARSE_ERR(cusparseCreateCoo(&sp_mtx, 
                 M, N, NZ, device_JR, device_JC, device_AA_sorted,
                 CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ONE, CUDA_R_32F));
@@ -220,12 +216,12 @@ int main(int argc, char* argv[])
         CUSPARSE_ERR(cusparseCreateDnVec(&dn_x, N, device_x, CUDA_R_32F));
         CUSPARSE_ERR(cusparseCreateDnVec(&dn_y, M, device_y, CUDA_R_32F));
 
-#ifndef CSR
+#ifndef CSR // when COO
 		CUSPARSE_ERR(cusparseSpMV_bufferSize(
 			handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
 			&alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
 			CUSPARSE_COOMV_ALG, &buffer_size));
-#else
+#else	// when CSR
 		CUSPARSE_ERR(cusparseSpMV_bufferSize(
 			handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
 			&alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
@@ -241,6 +237,7 @@ int main(int argc, char* argv[])
 
             
 		// ---- Step 9. Do SpMV ----
+#ifdef CUSPARSE
 #ifndef CSR
             CUSPARSE_ERR(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
                 &alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
@@ -250,13 +247,36 @@ int main(int argc, char* argv[])
                 &alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
                 CUSPARSE_CSRMV_ALG1, buffer));
 #endif
+#else // Kernel function implementation
 
+#ifdef SCALAR_KERNEL
+			// find the minimum block
+			int block_num = 1;
+			int thread_num = M;
+
+			if (M > 1024) {
+				while (block_num * 1024 < M) block_num++;
+				thread_num = 1024;
+			}
+			
+			ker_csr_spmv_scalar<<<block_num, thread_num>>>(device_JR, device_JC, device_AA_sorted, device_x, device_y);
+#endif
+#ifdef VECTOR_KERNEL
+
+
+
+
+
+#endif
+#endif
             // Record
             cudaEventRecord(stop); // timer end
             cudaEventSynchronize(stop);
             cudaEventElapsedTime(&elapsed, start, stop);
-
-            printf("   Iter %3d, Elapsed: %fms\n", i + 1, elapsed);
+			
+			if (i != 0) printf("   Iter %3d, Cached, Elapsed: %fms\n", i + 1, elapsed);
+			else printf("   Iter %3d, Elapsed: %fms\n", i + 1, elapsed);
+			
 			average += elapsed;
 			elapsed = 0;
 		}		
@@ -271,26 +291,19 @@ int main(int argc, char* argv[])
 
         // ---- Step 10. Fetch the result ----
         CUDA_ERR(cudaMemcpy(host_y, device_y, N * sizeof(float), cudaMemcpyDeviceToHost));
-
-		printf("Host memory check...\n");
-        for (int i = 0; i < 10; i++) 
-			printf("%9.1f", host_y[i]); // Check
-		printf("\n");
+		printf("Host memory check...\nhost_y: "); for (int i = 0; i < 10; i++) printf("%9.1f", host_y[i]); printf("\n");
         
         // ---- Step 12. Return resources ----
-		if (device_JR) cudaFree(device_JR);
-		if (device_JC) cudaFree(device_JC);
-		if (device_AA_sorted) cudaFree(device_AA_sorted);
-		if (device_x) cudaFree(device_x);
-		if (device_y) cudaFree(device_y);
-		if (buffer) cudaFree(buffer);
-		if (handle) cusparseDestroy(handle);
+		if (device_JR) 			cudaFree(device_JR);
+		if (device_JC) 			cudaFree(device_JC);
+		if (device_AA_sorted) 	cudaFree(device_AA_sorted);
+		if (device_x) 			cudaFree(device_x);
+		if (device_y) 			cudaFree(device_y);
+		if (buffer) 			cudaFree(buffer);
+		if (handle) 			cusparseDestroy(handle);
 
         cudaEventDestroy(start);
 		cudaEventDestroy(stop);
-#endif
-#ifndef CUSPARSE
-
 #endif
     }
 
