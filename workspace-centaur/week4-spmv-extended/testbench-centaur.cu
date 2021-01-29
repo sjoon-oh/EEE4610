@@ -87,9 +87,9 @@ int main(int argc, char* argv[])
 	// ---- Step 1. Load info ----	
 	printf("(File info)\tm : %d, n : %d, nz : %d\n", M, N, NZ);
 	printf("Printing samples...\n");
-	printf("JR: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
-	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
-	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
+	printf("JR: "); for (register int i = 0; i < 10; i++) printf("%6.0d", host_JR[i]); printf("\n");
+	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%6.0d", host_JC[i]); printf("\n");
+	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%6.0lf", host_AA[i]); printf("\n");
 	printf("File successfully loaded.\n");
 
 	// ---- Step 2. Handle create, bind a stream ---- 
@@ -144,9 +144,9 @@ int main(int argc, char* argv[])
 	free(host_P); // Unnecessary
 
 	printf("Printing sorted values...\n");
-	printf("JR: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
-	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
-	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
+	printf("JR: "); for (register int i = 0; i < 10; i++) printf("%6.0d", host_JR[i]); printf("\n");
+	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%6.0d", host_JC[i]); printf("\n");
+	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%6.0lf", host_AA[i]); printf("\n");
 
 #ifdef CSR
 	printf("Converting COO to CSR...\n");
@@ -164,9 +164,9 @@ int main(int argc, char* argv[])
 	host_JR = t_JR; // switch
 	
 	printf("Done.\n");
-	printf("JR: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
-	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
-	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
+	printf("JR: "); for (register int i = 0; i < 10; i++) printf("%6.0d", host_JR[i]); printf("\n");
+	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%6.0d", host_JC[i]); printf("\n");
+	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%6.0lf", host_AA[i]); printf("\n");
 
 #endif
 
@@ -270,9 +270,16 @@ int main(int argc, char* argv[])
 #endif
 #ifdef VECTOR_KERNEL
 
+			// find the minimum block
+			int block_num = 1;
+			int thread_num = M * 32;
 
-
-
+			if (M > 1024) {
+				while (block_num * 1024 < 32 * M) block_num++;
+				thread_num = 1024;
+			}
+			
+			ker_csr_spmv_vector<<<block_num, thread_num>>>(device_JR, device_JC, device_AA_sorted, device_x, device_y);
 
 #endif
 #endif
