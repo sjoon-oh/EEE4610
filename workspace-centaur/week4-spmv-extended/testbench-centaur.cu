@@ -244,6 +244,9 @@ int main(int argc, char* argv[])
 
 		printf("Iteration start.\n");
         for (register int i = 0; i < test_iterations; i++) {
+
+			CUDA_ERR(cudaMemcpy(device_y, host_y, sizeof(float) * N, cudaMemcpyHostToDevice)); // set to all zeros
+
             cudaEventCreate(&start);
             cudaEventCreate(&stop);
             cudaEventRecord(start); // Timer start
@@ -280,7 +283,7 @@ int main(int argc, char* argv[])
 			int block_num = 1;
 			int thread_num = M * 32;
 
-			if (M > 1024) {
+			if (M * 32 > 1024) {
 				while (block_num * 1024 < 32 * M) block_num++;
 				thread_num = 1024;
 			}
