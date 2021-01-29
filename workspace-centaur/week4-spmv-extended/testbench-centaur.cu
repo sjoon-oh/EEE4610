@@ -304,6 +304,10 @@ int main(int argc, char* argv[])
 		printf("Iteration end.\n");
 		printf("   Average elapsed time: %lf\n", average / test_iterations);
 
+		// ---- Step 10. Fetch the result ----
+		CUDA_ERR(cudaMemcpy(host_y, device_y, N * sizeof(float), cudaMemcpyDeviceToHost));
+		printf("Host memory check...\nhost_y: "); for (int i = 0; i < 10; i++) printf("%9.1f", host_y[i]); printf("\n");
+
 		// ---- Step 11. Destroy ----
 		CUSPARSE_ERR(cusparseDestroySpMat(sp_mtx));
 		CUSPARSE_ERR(cusparseDestroyDnVec(dn_x));
@@ -321,9 +325,7 @@ int main(int argc, char* argv[])
         cudaEventDestroy(start);
 		cudaEventDestroy(stop);
 
-		// ---- Step 10. Fetch the result ----
-		CUDA_ERR(cudaMemcpy(host_y, device_y, N * sizeof(float), cudaMemcpyDeviceToHost));
-		printf("Host memory check...\nhost_y: "); for (int i = 0; i < 10; i++) printf("%9.1f", host_y[i]); printf("\n");
+		
     }
 
     free(host_JR);
