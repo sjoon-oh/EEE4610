@@ -143,6 +143,11 @@ int main(int argc, char* argv[])
 
 	free(host_P); // Unnecessary
 
+	printf("Printing sorted values...\n");
+	printf("JR: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JR[i]); printf("\n");
+	printf("JC: "); for (register int i = 0; i < 10; i++) printf("%4.0d", host_JC[i]); printf("\n");
+	printf("AA: "); for (register int i = 0; i < 10; i++) printf("%4.0lf", host_AA[i]); printf("\n");
+
 #ifdef CSR
 	printf("Converting COO to CSR...\n");
 
@@ -151,8 +156,8 @@ int main(int argc, char* argv[])
 
     int* t_JR	    = (int*)calloc((M + 1), sizeof(int));
 	for (int i = 0; i < M + 1; i++) t_JR[i]++; 
-	for (int i = 0; i < NZ; i++) t_JR[host_JR[i]]++;
-	for (int i = 0; i < M; i++)	t_JR[i + 1] += (t_JR[i] - 1);
+	for (int i = 0; i < NZ; i++) 	t_JR[host_JR[i]]++;
+	for (int i = 0; i < M; i++)		t_JR[i + 1] += (t_JR[i] - 1);
 
 
     free(host_JR);
@@ -241,13 +246,13 @@ int main(int argc, char* argv[])
 		// ---- Step 9. Do SpMV ----
 #ifdef CUSPARSE
 #ifndef CSR
-            CUSPARSE_ERR(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
-                &alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
-                CUSPARSE_COOMV_ALG, buffer));
+			CUSPARSE_ERR(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
+				&alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
+				CUSPARSE_COOMV_ALG, buffer));
 #else
-            CUSPARSE_ERR(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
-                &alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
-                CUSPARSE_CSRMV_ALG1, buffer));
+			CUSPARSE_ERR(cusparseSpMV(handle, CUSPARSE_OPERATION_NON_TRANSPOSE,
+				&alpha, sp_mtx, dn_x, &beta, dn_y, CUDA_R_32F,
+				CUSPARSE_CSRMV_ALG1, buffer));
 #endif
 #else // Kernel function implementation
 
