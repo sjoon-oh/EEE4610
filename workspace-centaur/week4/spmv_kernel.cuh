@@ -21,7 +21,6 @@ __global__ void ker_csr_spmv_vector(
 	const float* arg_x, float* arg_y) {
 
 	// Thread : 32 * M
-
 	int tid		= blockDim.x * blockIdx.x + threadIdx.x;
 	int wid		= tid / 32;
 	int lidx	= tid & 31;
@@ -34,4 +33,31 @@ __global__ void ker_csr_spmv_vector(
 		sum += __shfl_down_sync(0xFFFFFFFF, sum, i);
 
 	if (lidx == 0) arg_y[wid] = sum;
+};
+
+//
+// CSR vector kernel function (shared)
+__global__ void ker_csr_spmv_vector_shared(
+	const int* argJR, const int* argJC, const float* argAA,
+	const float* arg_x, float* arg_y) {
+
+	__shared__ float[1024] shared_y; // fixed
+
+	int tid		= blockDim.x * blockIdx.x + threadIdx.x;
+	int wid		= tid / 32;
+	int lidx	= tid & 31;
+	float sum	= 0;
+
+	for (int i = argJR[wid] - 1 + lidx; i < argJR[wid + 1] - 1; i += 32)
+		shared_y[threadIdx.x] += argAA[i] * arg_x[argJC[i] - 1];
+
+	// Parallel reduction sum
+	if (lidx < 16) shared_y[threadIdx.x] += shared_y[threadIdx + 16];
+	if (lidx < 8) shared_y[threadIdx.x] += shared_y[threadIdx + 8];
+	if (lidx < 4) shared_y[threadIdx.x] += shared_y[threadIdx + 4];
+	if (lidx < 2) shared_y[threadIdx.x] += shared_y[threadIdx + 2];
+	if (lidx < 1) shared_y[threadIdx.x] += shared_y[threadIdx + 1];
+
+	// First thread writes the result
+	if (lidx == 0) y[wid] += shared_y[threadIdx.x];
 };
