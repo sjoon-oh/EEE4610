@@ -41,7 +41,7 @@ __global__ void ker_csr_spmv_vector_shared(
 	const int* argJR, const int* argJC, const float* argAA,
 	const float* arg_x, float* arg_y) {
 
-	__shared__ float[1024] shared_y; // fixed
+	__shared__ float shared_y[1024]; // fixed
 
 	int tid		= blockDim.x * blockIdx.x + threadIdx.x;
 	int wid		= tid / 32;
@@ -52,12 +52,12 @@ __global__ void ker_csr_spmv_vector_shared(
 		shared_y[threadIdx.x] += argAA[i] * arg_x[argJC[i] - 1];
 
 	// Parallel reduction sum
-	if (lidx < 16) shared_y[threadIdx.x] += shared_y[threadIdx + 16];
-	if (lidx < 8) shared_y[threadIdx.x] += shared_y[threadIdx + 8];
-	if (lidx < 4) shared_y[threadIdx.x] += shared_y[threadIdx + 4];
-	if (lidx < 2) shared_y[threadIdx.x] += shared_y[threadIdx + 2];
-	if (lidx < 1) shared_y[threadIdx.x] += shared_y[threadIdx + 1];
+	if (lidx < 16) shared_y[threadIdx.x] += shared_y[threadIdx.x + 16];
+	if (lidx < 8) shared_y[threadIdx.x] += shared_y[threadIdx.x + 8];
+	if (lidx < 4) shared_y[threadIdx.x] += shared_y[threadIdx.x + 4];
+	if (lidx < 2) shared_y[threadIdx.x] += shared_y[threadIdx.x + 2];
+	if (lidx < 1) shared_y[threadIdx.x] += shared_y[threadIdx.x + 1];
 
 	// First thread writes the result
-	if (lidx == 0) y[wid] += shared_y[threadIdx.x];
+	if (lidx == 0) arg_y[wid] += shared_y[threadIdx.x];
 };
