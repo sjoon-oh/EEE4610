@@ -33,11 +33,25 @@ declare -a plugins=(
 # Add personal bundles from here
 "Plugin 'scrooloose/nerdtree'"
 "Plugin 'altercation/vim-colors-solarized'"
+"Plugin 'vim-airline/vim-airline'"
+"Plugin 'vim-airline/vim-airline-themes'"
+"Plugin 'nanotech/jellybeans.vim'"
+"Plugin 'airblade/vim-gitgutter'"
 )
 
 # Personal key mappings
 declare -a mappings=(
-"nmap  <F9> :NERDTreeToggle<CR>"
+#"map <F1> :tabnew<CR>"
+"map <F3> :NERDTreeToggle<CR>"
+"map <F4> :GitGutterToggle<CR>"
+"map <C-o> :bp<CR>"
+"map <C-p> :bn<CR>"
+"map <C-t> :tabnew<CR>"
+"nnoremap <C-f> :NERDTreeFind<CR>"
+"let g:airline#extensions#tabline#enabled = 1"
+"let g:airline_theme='hybrid'"
+"autocmd VimEnter * NERDTree"
+"autocmd BufEnter * if tabpagenr('$') == 1 && winnr('$') == 1 && exists('b:NERDTree') && b:NERDTree.isTabTree() | quit | endif"
 )
 
 instruction="

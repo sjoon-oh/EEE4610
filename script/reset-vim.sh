@@ -27,6 +27,8 @@ echo "  Latest 2021.02.05. Xubuntu 20.04"
 
 if [ -d "${home_dir}/.vim" ]; then
 	echo "  Deleting directory: ${home_dir}/.vim"
+	vim +PluginClean +qall
+	wait
 	rm -rf ${home_dir}/.vim
 wait
 fi
