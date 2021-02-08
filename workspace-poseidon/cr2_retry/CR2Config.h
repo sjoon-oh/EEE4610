@@ -8,3 +8,6 @@
 #define CONSOLE_OUT_ENABLE
 
 #define COMMUNITY_SIZE ((65536)) 
+
+#define PUSH
+#define PULL

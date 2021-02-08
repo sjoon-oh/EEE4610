@@ -3,10 +3,13 @@
 // '21.02.07.
 //
 
+#include "CR2.h"
 #include "CR2Manager.h"
 #include "./util/platform_atomics.h"
 
 #include <algorithm>
+
+
 
 //
 // Finds the maximum vertex id, which becomes the (total number of edges - 1).
@@ -15,9 +18,9 @@ unsigned cr2::CR2Manager::altCountNodes(const std::vector<cr2::Edge>& argEdgeLis
     unsigned num_nodes = 0;
 
     #pragma omp parallel for reduction(max : num_nodes)
-    for (auto& it: argEdgeList) {
-        num_nodes = std::max(num_nodes, it->getSrcVertex());
-        num_nodes = std::max(num_nodes, it->getDstVertex());
+    for (auto it: argEdgeList) {
+        num_nodes = std::max(num_nodes, it.getSrcVertex());
+        num_nodes = std::max(num_nodes, it.getDstVertex());
     }
 
     return 0;
@@ -38,13 +41,32 @@ cr2::CR2Graph* cr2::CR2Manager::doBuild(const std::vector<cr2::Edge>& argEdgeLis
     num_original_nodes = this->altCountNodes(argEdgeList) + 1;
     num_edges = argEdgeList.size(); // Record the number of edges (original input graph)
 
-    
+    // Calculate the number of community
+    // Partition the nodes using the community size
+    num_community = (num_original_nodes % COMMUNITY_SIZE != 0) ? 
+        num_original_nodes / COMMUNITY_SIZE + 1 :
+        num_original_nodes / COMMUNITY_SIZE;
+
+    // Generate the range of communities, not yet graph inserted.
+    cr2_graph->doRegisterCommunity(num_community, num_original_nodes);
+
+    // Now, start inserting the graph information.
+    cr2_graph->doRegisterEdge(argEdgeList);
+
+
+
+
+
+
+
+
 
 
 
 };
 
-
+//
+// Frees all memory set.
 unsigned cr2::CR2Manager::doReset() {
 
     if (cr2_graph != nullptr) delete cr2_graph;
@@ -52,3 +74,15 @@ unsigned cr2::CR2Manager::doReset() {
 
     return 0;
 }
+
+#ifdef CONSOLE_OUT_ENABLE 
+// Debugging purpose
+void cr2::CR2Manager::console_out_object_info() {
+
+    printf("[cr2::CR2Manager]\n");
+    printf("    cr2_graph: %p\n", cr2_graph);
+    printf("    num_original_nodes: %d\n", num_original_nodes);
+    printf("    num_edges: %d\n", num_edges);
+    printf("    num_community: %d\n", num_community);
+}
+#endif

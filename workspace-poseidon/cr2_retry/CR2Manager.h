@@ -51,13 +51,9 @@ namespace cr2 {
             const unsigned getNumVirtualNodes() { return num_virtual_nodes; };
 
 #ifdef CONSOLE_OUT_ENABLE // Debugging purpose
-            void console_out_object_info() {
-
-                printf("[cr2::CR2Manager]\n");
-                printf("    cr2_graph: %p", cr2_graph);
-            }
+            void console_out_object_info();
 #endif
-    }
-}
+    };
+};
 
 #endif

@@ -8,8 +8,3 @@
 #ifndef CR2
 #define CR2
 #endif
-
-#ifdef CR2
-
-
-#endif

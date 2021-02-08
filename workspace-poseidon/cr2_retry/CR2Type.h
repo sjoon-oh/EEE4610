@@ -15,17 +15,6 @@ namespace cr2 {
     typedef uint32_t NODE; // Node type
     typedef uint32_t EDGE; // Edge type
 
-    class Edge final {
-        unsigned src_vertex;
-        unsigned dst_vertex;
-    public:
-        Edge(unsigned argsrc, unsigned argdst) : src_vertex(argsrc), dst_vertex(argdst) { };
-
-        // Getter
-        const unsigned getSrcVertex() { return src_vertex; };
-        const unsigned getDstVertex() { return dst_vertex; };
-    };
-
     // Specifies degree
     enum DEGREE {
         DEG_1 = 1, 
@@ -35,9 +24,27 @@ namespace cr2 {
         DEG_16 = 16, 
         DEG_32 = 32
     };
+    
+    class Edge final {
+    private:
+        NODE src_vertex;
+        NODE dst_vertex;
+
+    public:
+        Edge(unsigned argsrc, unsigned argdst) : src_vertex(argsrc), dst_vertex(argdst) { };
+
+        // Getter
+        const unsigned getSrcVertex() { return src_vertex; };
+        const unsigned getDstVertex() { return dst_vertex; };
+    };
 
     // Cluster ID
     inline DENSE_TYPE cluster_id(SPARSE_TYPE argVid) { return argVid & 0xFFFF0000; }
+    inline SPARSE_TYPE global_id(DENSE_TYPE argVid, SPARSE_TYPE argSVid) { 
+    
+        return (argVid << 16) | (argSVid & 0XFFFF0000);
+    };
 
-    enum LOC { HEAD = 0, TAIL};
+    enum LOC { START = 0, END};
+    // Index values.
 }
