@@ -17,13 +17,10 @@ namespace cr2 {
 
     // Specifies degree
     enum DEGREE {
-        DEG_1 = 1, 
-        DEG_2 = 2, 
-        DEG_4 = 4, 
-        DEG_8 = 8, 
-        DEG_16 = 16, 
-        DEG_32 = 32
+        DEG_1 = 0, DEG_2, DEG_4, DEG_8, DEG_16, DEG_32
     };
+
+    enum DIR { IN = 0, OUT };
     
     class Edge final {
     private:

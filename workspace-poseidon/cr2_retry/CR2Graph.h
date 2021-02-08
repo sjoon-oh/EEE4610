@@ -18,52 +18,6 @@
 
 namespace cr2 {
 
-    // Community class
-    class CR2Community final {
-    private:
-        // Meta data
-        uint32_t id;
-        uint32_t vid_range[2];
-
-        uint32_t* incoming_degree;
-        uint32_t* outgoing_degree;
-
-        // handle
-        std::vector<cr2::CR2IntraCluster*> intra_cluster_list;
-
-
-    public:
-        // ctor & dtor
-        CR2Community() : id(0) { };
-        CR2Community(uint32_t argId, uint32_t argHead, uint32_t argTail) 
-            : id(argId) { 
-                // HEAD and TAIL points to the range index. 
-                vid_range[cr2::LOC::START] = argHead;
-                vid_range[cr2::LOC::END] = argTail;
-
-                // allocate using the size
-                uint32_t num_nodes = argTail - argHead;
-
-                // Each index value represents a vertex id
-                this->incoming_degree = new uint32_t[num_nodes];
-                this->outgoing_degree = new uint32_t[num_nodes];
-            };
-
-        ~CR2Community() {
-            delete[] incoming_degree;
-            delete[] outgoing_degree;
-        }
-
-        unsigned doRegisterIntraCluster(); // push single intra-cluster
-        unsigned doRegisterSingleDegree();
-
-#ifdef CONSOLE_OUT_ENABLE // Debugging purpose
-        void console_out_object_info();
-#endif
-    };
-
-
-
     // CR2Graph class is just a container.
     // 
     class CR2Graph final {
@@ -73,8 +27,8 @@ namespace cr2 {
             uint32_t num_intra_cluster; // number of intra cluster
 
             // Graph information
-            std::vector<CR2Community*> intra_cluster_community;
-            cr2::CR2Community* inter_cluster_community; // Fixed to have only one.
+            std::vector<CR2Cluster<cr2::DENSE_TYPE>*> intra_cluster;
+            cr2::CR2Cluster<cr2::SPARSE_TYPE>* inter_cluster; // Fixed to have only one.
 
             // Alt
 
@@ -83,16 +37,13 @@ namespace cr2 {
             // ctor & dtor
             CR2Graph() 
                 : num_intra_cluster(0), 
-                inter_cluster_community(nullptr)
-                {
+                inter_cluster(nullptr) {
 
                 };
             ~CR2Graph() {};
 
             // Interface
-            unsigned doRegisterCommunity(uint32_t, uint32_t);
-            unsigned doUnregisterCommunity();
-
+            unsigned doRegisterCluster(uint32_t, uint32_t);
             unsigned doRegisterEdge(const std::vector<cr2::Edge>&);
 
             unsigned doDestroy();

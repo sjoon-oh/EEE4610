@@ -43,12 +43,12 @@ cr2::CR2Graph* cr2::CR2Manager::doBuild(const std::vector<cr2::Edge>& argEdgeLis
 
     // Calculate the number of community
     // Partition the nodes using the community size
-    num_community = (num_original_nodes % COMMUNITY_SIZE != 0) ? 
-        num_original_nodes / COMMUNITY_SIZE + 1 :
-        num_original_nodes / COMMUNITY_SIZE;
+    num_community = (num_original_nodes % CLUSTER_SIZE != 0) ? 
+        num_original_nodes / CLUSTER_SIZE + 1 :
+        num_original_nodes / CLUSTER_SIZE;
 
     // Generate the range of communities, not yet graph inserted.
-    cr2_graph->doRegisterCommunity(num_community, num_original_nodes);
+    cr2_graph->doRegisterCluster(num_community, num_original_nodes);
 
     // Now, start inserting the graph information.
     cr2_graph->doRegisterEdge(argEdgeList);

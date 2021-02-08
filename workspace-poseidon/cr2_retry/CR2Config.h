@@ -7,7 +7,7 @@
 #define CR2
 #define CONSOLE_OUT_ENABLE
 
-#define COMMUNITY_SIZE ((65536)) 
+#define CLUSTER_SIZE ((65536)) 
 
 #define PUSH
 #define PULL
