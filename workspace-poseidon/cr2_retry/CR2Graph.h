@@ -23,23 +23,17 @@ namespace cr2 {
     class CR2Graph final {
         private:
             // Meta data
-            uint32_t num_nodes; // number of nodes
-            uint32_t num_intra_cluster; // number of intra cluster
+            uint32_t num_nodes = 0; // number of nodes
+            uint32_t num_intra_cluster = 0; // number of intra cluster
 
             // Graph information
             std::vector<CR2Cluster<cr2::DENSE_TYPE>*> intra_cluster;
             cr2::CR2Cluster<cr2::SPARSE_TYPE>* inter_cluster; // Fixed to have only one.
 
             // Alt
-
-
         public:
             // ctor & dtor
-            CR2Graph() 
-                : num_intra_cluster(0), 
-                inter_cluster(nullptr) {
-
-                };
+            CR2Graph() = default;
             ~CR2Graph() {};
 
             // Interface

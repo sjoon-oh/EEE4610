@@ -12,19 +12,17 @@
 #include "CR2Type.h"
 #include "CR2Graph.h"
 
-#define POW(a, b) ((uint32_t)pow(a, b))
-
 namespace cr2 {
 
     // CR2Manager class. Manages the CR2Graph.
     class CR2Manager final {
         private:
-            cr2::CR2Graph* cr2_graph;
+            cr2::CR2Graph* cr2_graph = nullptr;
             
-            unsigned num_original_nodes; // Number of original graph's nodes
-            unsigned num_edges;
-            unsigned num_virtual_nodes; // Total number of virtual nodes
-            unsigned num_community;
+            unsigned num_original_nodes = 0; // Number of original graph's nodes
+            unsigned num_edges = 0;
+            unsigned num_virtual_nodes = 0; // Total number of virtual nodes
+            unsigned num_community = 0;
 
             // Core
             unsigned altCountNodes(const std::vector<cr2::Edge>&); 
@@ -33,12 +31,7 @@ namespace cr2 {
 
         public:
             // ctor & dtor
-            CR2Manager() : 
-                num_original_nodes(0), 
-                num_edges(0), 
-                num_virtual_nodes(0),
-                num_community(0) { 
-                };
+            CR2Manager() = default;
             ~CR2Manager() { this->doReset(); };
 
             // Interface
