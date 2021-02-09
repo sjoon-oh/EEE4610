@@ -27,20 +27,29 @@ namespace cr2 {
     template <class T>
     class CR2Cluster final {
     private:
-        // Meta data
+        // Meta data (level 1)
         uint32_t id = 0;
         uint32_t num_nodes = 0;
         uint32_t num_edges = 0;
         uint32_t num_virtual_nodes[2] = {0, 0}; // Number of total virtual nodes
-
-        // Graph data
+        
+        // Meta data (level 2)
         uint32_t* vertex_degrees[2] = { nullptr, nullptr }; // IN(0), OUT(1)
+        
+        uint32_t* index_map_pos[2][6]; // former edgePosition 2*2 matrix
+        uint32_t* index_map_rem[2][6]; // former remains 2*2 matrix
+            // These are 3 Dimensional arrays.
+            // First index should be the direction of an edge: IN(0), OUT(1)
+            // Second index should be the log_degree: cr2::DEG_1 to cr2::DEG_32
+            // Final index is the vertex id. Thus, the overall size will be, 2 * 6 * num_nodes.
+
+        // Degree-ordered Subgraph
         cr2::CR2DegreeSubgraph<T> degree_subgraph[6];
             // DEG_1(0), DEG_2(1), DEG_4(2), DEG_8(3), DEG_16(4), DEG_32(5)
 
         // handle
-        // std::vector<cr2::CR2IntraCluster*> intra_cluster_list;
-        T* vertex_id_list[2];
+        T* vertex_list[2] = { nullptr, nullptr };
+        T* edge_list[2] = { nullptr, nullptr };
 
     public:
         // ctor & dtor
@@ -51,11 +60,18 @@ namespace cr2 {
         // Interface
         // Call in a sequence. 
         // 1. doRegisterSingleDegree
-        // 2. doRegisterDegreeSubgraphs
-        // 3. doVertexSplit
-        unsigned doRegisterSingleDegree(uint32_t, uint32_t);
-        unsigned doRegisterDegreeSubgraphs();
-        unsigned doVertexSplit();
+        // 2. doBuildDegreeSubgraph
+        // 3. doBuildVertexList
+        unsigned doRecordSingleDegree(uint32_t, uint32_t);
+        unsigned doRecordSingleNeighbor(uint32_t, uint32_t);
+
+        unsigned doBuildDegreeSubgraph();
+        unsigned doBuildVertexList();
+        unsigned doBuildEdgeList();
+
+        // Clearing meta data
+        unsigned doReleaseLv1();
+        unsigned doReleaseLv2();
 
 #ifdef CONSOLE_OUT_ENABLE // Debugging purpose
         void console_out_object_info();
@@ -73,21 +89,27 @@ cr2::CR2Cluster<T>::CR2Cluster(uint32_t argId, uint32_t argHead, uint32_t argTai
 
     // To all zeros!
     num_virtual_nodes[IN] = num_virtual_nodes[OUT] = 0;
-    vertex_id_list[IN] = vertex_id_list[OUT] = nullptr;
+    vertex_list[IN] = vertex_list[OUT] = nullptr;
 
-    for (int log_deg = 0; log_deg < 6; log_deg++)
+    for (int log_deg = cr2::DEG_1; log_deg < cr2::DEG_32; log_deg++)
         degree_subgraph[log_deg].setDegree(log_deg);
 
     // allocate using the size
     num_nodes = argTail - argHead;
 
     // Each index value represents a vertex id
-    // Initialize arrays with all zeros.
+    // Initialize arrays with all zeros. (Meta data level 2)
     this->vertex_degrees[IN] = new uint32_t[num_nodes]();
     this->vertex_degrees[OUT] = new uint32_t[num_nodes]();
 
-    // for (int vertex_id = 0; vertex_id < num_nodes; vertex_id++)
-    //     vertex_degrees[IN][vertex_id] = vertex_degrees[OUT][vertex_id] = 0;
+    for (int log_deg = cr2::DEG_1; log_deg < cr2::DEG_32; log_deg++) {
+
+        index_map_pos[IN][log_deg] = new uint32_t[num_nodes]();
+        index_map_pos[OUT][log_deg] = new uint32_t[num_nodes]();
+
+        index_map_rem[IN][log_deg] = new uint32_t[num_nodes]();
+        index_map_rem[OUT][log_deg] = new uint32_t[num_nodes]();
+    }
 
 };
 
@@ -97,32 +119,86 @@ cr2::CR2Cluster<T>::~CR2Cluster() {
     delete[] this->vertex_degrees[IN];
     delete[] this->vertex_degrees[OUT];
 
-    if (vertex_id_list[IN] != nullptr) delete[] vertex_id_list[IN];
-    if (vertex_id_list[OUT] != nullptr) delete[] vertex_id_list[OUT];
+    if (vertex_list[IN] != nullptr) delete[] vertex_list[IN];
+    if (vertex_list[OUT] != nullptr) delete[] vertex_list[OUT];
+
+    for (unsigned log_deg = cr2::DEG_1; log_deg <= cr2::DEG_32; log_deg++ {
+        for (unsigned direction = IN; direction <= OUT; direction++) {
+            if ( index_map_pos[direction][log_deg] != nullptr ) delete[] index_map_pos[direction][log_deg]
+            if ( index_map_rem[direction][log_deg] != nullptr ) delete[] index_map_rem[direction][log_deg]
+        }
+    }
 };
+
+template <class T>
+unsigned cr2::CR2Cluster<T>::doReleaseLv2() {
+
+    for (unsigned log_deg = cr2::DEG_1; log_deg <= cr2::DEG_32; log_deg++ {
+        for (unsigned direction = IN; direction <= OUT; direction++) {
+
+            delete[] index_map_pos[direction][log_deg];
+            delete[] index_map_rem[IdirectionN][log_deg];
+
+            index_map_pos[direction][log_deg] = nullptr;
+            index_map_rem[direction][log_deg] = nullptr;
+        }
+    }
+
+    return 0;
+}
 
 
 // Interface
 // To fully function, the api should be called in a sequence.
-// 1. Call doRegisterSingleDegree in iteration to count vertices' incoming/outgoing degrees.
-// 2. Then call doArrangeCommunity to generate metadata for the community
+// 1. Call doRecordSingleDegree in iteration to count vertices' incoming/outgoing degrees.
+// 2. Then call doBuildDegreeSubgraph to generate metadata for the community
+// 3.
+// 4.
 
 //
 // Registers single degree. It receives single edge, (src, dst) for its argument.
 template <class T>
-unsigned cr2::CR2Cluster<T>::doRegisterSingleDegree(uint32_t argSrc, uint32_t argDst) {
+unsigned cr2::CR2Cluster<T>::doRecordSingleDegree(uint32_t argSrc, uint32_t argDst) {
 
-    fetch_and_add(in_degree[argDst], 1);
-    fetch_and_add(out_degree[argSrc], 1);
+    fetch_and_add(vertex_degrees[IN][argDst], 1);
+    fetch_and_add(vertex_degrees[OUT][argSrc], 1);
 
     return 0;
 };
+
+template <class T>
+unsigned cr2::CR2Cluster<T>::doRecordSingleNeighbor(uint32_t argSrc, uint32_t argDst) {
+
+    // For a given degree,
+    for (unsigned log_deg = cr2::DEG_32; log_deg >= cr2::DEG_1; log_deg--) {
+        // and with an incoming/outgoing direction,
+        if (index_map_rem[IN][log_deg][argDst] > 0) { // only if the remain is positive,
+
+            edge_list[IN][ index_map_pos[IN][log_deg][] ] = argSrc;
+            index_map_pos[IN][log_deg][argDst]++;
+            index_map_rem[IN][log_deg][argDst]--;
+
+            break;
+        }
+
+        if (index_map_rem[OUT][log_deg][argSrc] > 0) { // only if the remain is positive,
+
+            edge_list[OUT][ index_map_pos[OUT][log_deg][] ] = argDst;
+            index_map_pos[OUT][log_deg][argSrc]++;
+            index_map_rem[OUT][log_deg][argSrc]--;
+
+            break;
+        }
+    }
+
+    return 0;
+}
 
 
 //
 // Generates DegreeSubgraph information. Example: Size, offset etc.
 template <class T>
-unsigned cr2::CR2Cluster<T>::doRegisterDegreeSubgraphs() {
+unsigned cr2::CR2Cluster<T>::doBuildDegreeSubgraph() {
 
     //
     // 1st Step. Prepare the degreed subgraph.
@@ -156,7 +232,6 @@ unsigned cr2::CR2Cluster<T>::doRegisterDegreeSubgraphs() {
         // This is the key point of all these shits.
         // Record the number of virtual nodes to each DegreeSubgraph objects.
         for (unsigned log_deg = cr2::DEG_1; log_deg <= cr2::DEG_32; log_deg++) {
-
             if (num_nodes_of[IN][log_deg] != 0)
                 fetch_and_add(
                     degree_subgraph[log_deg].num_virtual_nodes[IN], num_nodes[IN][log_deg] );
@@ -175,14 +250,14 @@ unsigned cr2::CR2Cluster<T>::doRegisterDegreeSubgraphs() {
 
         // Record the starting point of each degree-subgraphs.
         // Recall that the structures share the same single target array: 
-        //     vertex_id_list - The ultimate purpose of all these shits.
+        //     vertex_list - The ultimate purpose of all these shits.
         for (unsigned log_deg = cr2::DEG_1; log_deg <= cr2::DEG_32; log_deg++) {
 
-            degree_subgraph[log_deg].setNodeRangeStart(IN, node_current[IN]); // former prefix sum
-            degree_subgraph[log_deg].setEdgeRangeStart(IN, edge_current[IN]);
+            degree_subgraph[log_deg].setNodeOffset(IN, node_current[IN]); // former prefix sum
+            degree_subgraph[log_deg].setEdgeOffset(IN, edge_current[IN]);
 
-            degree_subgraph[log_deg].setNodeRangeStart(OUT, node_current[OUT]);
-            degree_subgraph[log_deg].setEdgeRangeStart(OUT, edge_current[OUT]);
+            degree_subgraph[log_deg].setNodeOffset(OUT, node_current[OUT]);
+            degree_subgraph[log_deg].setEdgeOffset(OUT, edge_current[OUT]);
 
             node_current[IN] += degree_subgraph[log_deg].getNumVirtualNodes(IN);
             edge_current[IN] += 
@@ -205,9 +280,9 @@ unsigned cr2::CR2Cluster<T>::doRegisterDegreeSubgraphs() {
         this->num_virtual_nodes[OUT] += degree_subgraph->accessNumVirtualNodes(OUT);
 
         // Note that num_virtual_nodes from CR2DegreeSubgraph refers to 
-        // the number belongs to each CR2DegreeSubgraph object,
+        // the number that belongs to each CR2DegreeSubgraph object,
         // and the num_virtual_nodes from CR2Cluster refers to 
-        // the number of total virtual nodes in the CR2Clusrer.
+        // the number of total virtual nodes in the CR2Cluster.
     }
 
     return 0;
@@ -215,54 +290,71 @@ unsigned cr2::CR2Cluster<T>::doRegisterDegreeSubgraphs() {
 
 
 //
-// Refactored version of PartialGraph::splitNodes(). 
+// Refactored version of PartialGraph::buildVertexIDList() (and bulildVertexIDList_in or _out). 
 template <class T>
-unsigned cr2::CR2Cluster<T>::doVertexSplit() { // Third step!!
+unsigned cr2::CR2Cluster<T>::doBuildVertexList() { // Third step!!
 
     // Prepare to fight!
-    this->vertex_id_list[IN] = new T[num_edges];
-    this->vertex_id_list[OUT] = new T[OUT];
+    this->vertex_list[IN] = new T[num_edges];
+    this->vertex_list[OUT] = new T[num_edges];
 
     // Originally, PartialGraph::buildVertexIDList_in() or _out()
-    // Outer Loop: Traverse through vertex ID
-    for (int vertex_id = 0; vertex_id < num_nodes; vertex_id++) {
-        
-        // Inner Loop 1: Is incoming edge or the outcoming edge?
-        for (int edge_direction = cr2::IN;
-            edge_direction <= cr2::OUT; edge_direction++) {
+    // 1. For a specific vertex,
+    for (unsigned vertex_id = 0; vertex_id < num_nodes; vertex_id++) {
+        uint32_t current_remain = vertex_degrees[direction][vertex_id];
 
-            if (vertex_degrees[edge_direction][vertex_id] != 0) { 
-                uint32_t current_remain = vertex_degrees[edge_direction][vertex_id];
+        // 2. with a given direction,
+        for (int direction = cr2::IN; direction <= cr2::OUT; direction++) {
+            
+            // 3. and only if the vertex has non-zero degree
+            if (vertex_degrees[direction][vertex_id] != 0) {
+                
+                // 4. iterate through the degree.
+                for (unsigned log_deg = cr2::DEG_32; log_deg >= cr2::DEG_1; log_deg--) {
+                    if (current_remain >= POW2(log_deg)) {
 
-                // Inner Loop 2: Traverse through 2^DEG_32(5) to 2^DEG_1(1)
-                for (unsigned log_deg = cr2::DEG_32; log_deg >= cr2::DEG_1; log_deg++) {
-                    uint32_t degree = POW2(log_deg);
-                    uint32_t num_virtual_nodes_s = current_remain / degree;
+                        // For a vertex, number of virtual nodes can be obtained via division of 2^deg
+                        // The starting point of the corresponding(degree) index were saved beforehand,
+                        uint32_t num_virtual_nodes_s = current_remain / POW2(log_deg);
+                        uint32_t p_start = degree_subgraph[log_deg].getNodeOffset(direction);
+                        uint32_t p_end = pstart + num_virtual_nodes_s;
+                        
+                        // Thus, for the region between p_start ~ p_end should the vertex_id be saved.
+                        for (uint32_t pos = p_start; pos < p_end; pos++)
+                            vertex_list[direction][pos] = T(vertex_id);
+                        
+                        // map_XX series are index maps for buildNeighborList. 
+                        this->index_map_pos[direction][log_deg][vertex_id]
+                            = degree_subgraph[log_deg].getEdgeOffset(direction);
+                        this->index_map_rem[direction][log_deg][vertex_id]
+                            = (num_virtual_nodes_s * POW2(log_deg));
 
+                        // Alter the node_offset and edge_offset for each degree-ordered subgraphs.
+                        degree_subgraph[log_deg].addNodeOffset(
+                            direction, num_virtual_nodes_s
+                        );
+                        degree_subgraph[log_deg].addEdgeOffset(
+                            direction, (num_virtual_nodes_s * POW2(log_deg))
+                        );
+                    }
 
-                    for (uint32_t pos = degree_subgraph[log_deg].getNodeRangeStart(edge_direction);
-                        pos < degree_subgraph[log_deg].getNodeRangeStart(edge_direction) + 
-                    )
-
-
-
-
-
-
-
-                    
-
+                    current_remain = current_remain % degree;
                 }
-            }
+            }            
         }
     }
+
+    return 0;
+}
+
+
+
+template <class T>
+unsigned cr2::CR2Cluster<T>::doBuildEdgeList() { // Third step!!
+
     
 
 
-
-
-
-    return 0;
 }
 
 

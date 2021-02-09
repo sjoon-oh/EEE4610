@@ -57,33 +57,44 @@ unsigned cr2::CR2Graph::doRegisterEdge(const std::vector<cr2::Edge>& argEdgeList
         cr2::EDGE dst = it.getDstVertex();
         
         if (IS_SAME_CLUSTER(src, dst)) // In case if it belongs to same cluster,
-            this->intra_cluster[CLUSTER_ID(src)]->doRegisterSingleDegree(
+            this->intra_cluster[CLUSTER_ID(src)]->doRecordSingleDegree(
                 COMMINUTY_INNER_IDX(src), COMMINUTY_INNER_IDX(dst)
             ); // At its cluster (with its appropriate community id), should edges be stored.
 
         else // If it is not the case (not belongs to the same cluster)
-            this->inter_cluster->doRegisterSingleDegree(
+            this->inter_cluster->doRecordSingleDegree(
                 COMMINUTY_INNER_IDX(src), COMMINUTY_INNER_IDX(dst)
             );
     } // so far, refactored former CommCSRBuilder::countDegrees
 
+    // Next, register degree-subgraphs 
+    inter_cluster->doBuildDegreeSubgraph();
+    inter_cluster->doBuildVertexList();
 
+    for (auto& ic: this->intra_cluster) {
+        ic->doBuildDegreeSubgraph();   
+        ic->doBuildVertexList();
+    } // so far, refactored former splitNodes()
 
+    for (auto it: argEdgeList) {
 
+        cr2::EDGE src = it.getSrcVertex();
+        cr2::EDGE dst = it.getDstVertex();
+        
+        if (IS_SAME_CLUSTER(src, dst)) // In case if it belongs to same cluster,
+            this->intra_cluster[CLUSTER_ID(src)]->doRecordSingleNeighbor(
+                COMMINUTY_INNER_IDX(src), COMMINUTY_INNER_IDX(dst)
+            ); // At its cluster (with its appropriate community id), should edges be stored.
 
+        else // If it is not the case (not belongs to the same cluster)
+            this->inter_cluster->doRecordSingleNeighbor(
+                COMMINUTY_INNER_IDX(src), COMMINUTY_INNER_IDX(dst)
+            );
+    } // so far, refactored former CommCSRBuilder::buildNeighborList
 
-
-    // so far, refactored former splitNodes()
-
-
-
-
-
-
-
-
-    // so far, refactored former CommCSRBuilder::buildNeighborList
-
+    inter_cluster->doReleaseLv2();
+    for (auto& ic: this->intra_cluster) ic->doReleaseLv2();
+    
     return 0;
 };
 

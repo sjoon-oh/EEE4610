@@ -48,21 +48,14 @@ cr2::CR2Graph* cr2::CR2Manager::doBuild(const std::vector<cr2::Edge>& argEdgeLis
         num_original_nodes / CLUSTER_SIZE;
 
     // Generate the range of communities, not yet graph inserted.
-    cr2_graph->doRegisterCluster(num_community, num_original_nodes);
+    // Former DenseGraph/SparseGraph ctor.
+    cr2_graph->doRegisterCluster(num_community, num_original_nodes); 
 
     // Now, start inserting the graph information.
+    // Former countDegrees
     cr2_graph->doRegisterEdge(argEdgeList);
 
-
-
-
-
-
-
-
-
-
-
+    return this->cr2_graph;
 };
 
 //
