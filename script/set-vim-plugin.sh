@@ -18,7 +18,6 @@ declare -a settings=(
 "set smartcase"
 "set smarttab"
 "set ruler"
-"color slate"
 "syntax on"
 )
 
@@ -32,16 +31,20 @@ declare -a plugins=(
 
 # Add personal bundles from here
 "Plugin 'scrooloose/nerdtree'"
-"Plugin 'altercation/vim-colors-solarized'"
+#"Plugin 'altercation/vim-colors-solarized'"
 "Plugin 'vim-airline/vim-airline'"
 "Plugin 'vim-airline/vim-airline-themes'"
-"Plugin 'nanotech/jellybeans.vim'"
+#"Plugin 'nanotech/jellybeans.vim'"
 "Plugin 'airblade/vim-gitgutter'"
+"Plugin 'arcticicestudio/nord-vim'"
 )
 
 # Personal key mappings
 declare -a mappings=(
-#"map <F1> :tabnew<CR>"
+# Nord themes settings
+"colorscheme nord"
+"let g:nord_italic_comments = 1"
+# Key mappings
 "map <F3> :NERDTreeToggle<CR>"
 "map <F4> :GitGutterToggle<CR>"
 "map <C-o> :bp<CR>"
