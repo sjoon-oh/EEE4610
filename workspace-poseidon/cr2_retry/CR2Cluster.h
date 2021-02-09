@@ -12,12 +12,14 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cmath>
 
 #include "CR2Type.h"
 #include "CR2DegreeSubgraph.h"
 
 #include "./util/platform_atomics.h"
 
+#define POW2(X) (uint32_t(pow(2, X)))
 
 namespace cr2 {
 
@@ -143,12 +145,12 @@ unsigned cr2::CR2Cluster<T>::doRegisterDegreeSubgraphs() {
 
         for (unsigned log_deg = cr2::DEG_16; cr2::DEG_1 <= log_deg; log_deg--) {
             // Keep dividing and store remains to propagate to the next degree-array.
-
-            num_nodes_of[IN][log_deg] = num_remains_of[IN][log_deg + 1] / uint32_t(pow(2, log_deg));
-            num_nodes_of[IN][log_deg] = num_remains_of[IN][log_deg + 1] % uint32_t(pow(2, log_deg));
             
-            num_nodes_of[OUT][log_deg] = num_remains_of[OUT][log_deg + 1] / uint32_t(pow(2, log_deg));
-            num_nodes_of[OUT][log_deg] = num_remains_of[OUT][log_deg + 1] % uint32_t(pow(2, log_deg));
+            num_nodes_of[IN][log_deg] = num_remains_of[IN][log_deg + 1] / POW2(log_deg);
+            num_nodes_of[IN][log_deg] = num_remains_of[IN][log_deg + 1] % POW2(log_deg);
+            
+            num_nodes_of[OUT][log_deg] = num_remains_of[OUT][log_deg + 1] / POW2(log_deg);
+            num_nodes_of[OUT][log_deg] = num_remains_of[OUT][log_deg + 1] % POW2(log_deg);
         } // So far, we have recorded the number of size of DegreeSubgraph.
         
         // This is the key point of all these shits.
@@ -184,11 +186,11 @@ unsigned cr2::CR2Cluster<T>::doRegisterDegreeSubgraphs() {
 
             node_current[IN] += degree_subgraph[log_deg].getNumVirtualNodes(IN);
             edge_current[IN] += 
-                (degree_subgraph[log_deg].getNumVirtualNodes(IN) * uint32_t(pow(2, log_deg)));
+                (degree_subgraph[log_deg].getNumVirtualNodes(IN) * POW2(log_deg));
             
             node_current[OUT] += degree_subgraph[log_deg].getNumVirtualNodes(OUT);
             edge_current[OUT] += 
-                (degree_subgraph[log_deg].getNumVirtualNodes(OUT) * uint32_t(pow(2, log_deg)));
+                (degree_subgraph[log_deg].getNumVirtualNodes(OUT) * POW2(log_deg));
         }
     } // PartialGraph::calculatePrefixSum() done.
     
@@ -197,7 +199,7 @@ unsigned cr2::CR2Cluster<T>::doRegisterDegreeSubgraphs() {
     for (unsigned log_deg = cr2::DEG_1; log_deg <= cr2::DEG_32; log_deg++) {
 
         this->num_edges 
-            += (degree_subgraph->num_virtual_nodes[IN] * uint32_t(pow(2, log_deg)));
+            += (degree_subgraph->num_virtual_nodes[IN] * POW2(log_deg));
 
         this->num_virtual_nodes[IN] += degree_subgraph->accessNumVirtualNodes(IN);
         this->num_virtual_nodes[OUT] += degree_subgraph->accessNumVirtualNodes(OUT);
@@ -229,16 +231,30 @@ unsigned cr2::CR2Cluster<T>::doVertexSplit() { // Third step!!
         for (int edge_direction = cr2::IN;
             edge_direction <= cr2::OUT; edge_direction++) {
 
+            if (vertex_degrees[edge_direction][vertex_id] != 0) { 
                 uint32_t current_remain = vertex_degrees[edge_direction][vertex_id];
 
-                if (vertex_degrees[edge_direction][vertex_id] != 0) { 
+                // Inner Loop 2: Traverse through 2^DEG_32(5) to 2^DEG_1(1)
+                for (unsigned log_deg = cr2::DEG_32; log_deg >= cr2::DEG_1; log_deg++) {
+                    uint32_t degree = POW2(log_deg);
+                    uint32_t num_virtual_nodes_s = current_remain / degree;
+
+
+                    for (uint32_t pos = degree_subgraph[log_deg].getNodeRangeStart(edge_direction);
+                        pos < degree_subgraph[log_deg].getNodeRangeStart(edge_direction) + 
+                    )
+
+
+
+
+
+
+
                     
-
-
-
 
                 }
             }
+        }
     }
     
 
