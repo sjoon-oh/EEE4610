@@ -10,9 +10,12 @@
 
 // Defined Utility
 #define CLUSTER_ID(X) (X / CLUSTER_SIZE)
-#define COMMINUTY_INNER_IDX(X) (X % CLUSTER_SIZE)
+#define CLUSTER_INNER_IDX(X) (X % CLUSTER_SIZE)
 
 #define IS_SAME_CLUSTER(X, Y) (( (X / CLUSTER_SIZE) == (Y / CLUSTER_SIZE) )) // query
+
+// dtor
+cr2::CR2Graph::~CR2Graph() { this->doRelease(); }
 
 //
 // This function plays a role of the existing DenseGraph's (and SparseGraph's) constructor.
@@ -58,24 +61,27 @@ unsigned cr2::CR2Graph::doRegisterEdge(const std::vector<cr2::Edge>& argEdgeList
         
         if (IS_SAME_CLUSTER(src, dst)) // In case if it belongs to same cluster,
             this->intra_cluster[CLUSTER_ID(src)]->doRecordSingleDegree(
-                COMMINUTY_INNER_IDX(src), COMMINUTY_INNER_IDX(dst)
+                CLUSTER_INNER_IDX(src), CLUSTER_INNER_IDX(dst)
             ); // At its cluster (with its appropriate community id), should edges be stored.
 
         else // If it is not the case (not belongs to the same cluster)
             this->inter_cluster->doRecordSingleDegree(
-                COMMINUTY_INNER_IDX(src), COMMINUTY_INNER_IDX(dst)
+                CLUSTER_INNER_IDX(src), CLUSTER_INNER_IDX(dst)
             );
     } // so far, refactored former CommCSRBuilder::countDegrees
 
-    // Next, register degree-subgraphs 
+
+    // Next, register degree-subgraphs and do vertex split.
+    // Make seats for the vertex!!
     inter_cluster->doBuildDegreeSubgraph();
-    inter_cluster->doBuildVertexList();
+    inter_cluster->doBuildVertexList(); // Vertex Splitting
 
     for (auto& ic: this->intra_cluster) {
         ic->doBuildDegreeSubgraph();   
-        ic->doBuildVertexList();
+        ic->doBuildVertexList(); // Vertex Splitting
     } // so far, refactored former splitNodes()
 
+    // Final step: Insert neighbors to the clusters, where seats are ready. 
     for (auto it: argEdgeList) {
 
         cr2::EDGE src = it.getSrcVertex();
@@ -83,15 +89,19 @@ unsigned cr2::CR2Graph::doRegisterEdge(const std::vector<cr2::Edge>& argEdgeList
         
         if (IS_SAME_CLUSTER(src, dst)) // In case if it belongs to same cluster,
             this->intra_cluster[CLUSTER_ID(src)]->doRecordSingleNeighbor(
-                COMMINUTY_INNER_IDX(src), COMMINUTY_INNER_IDX(dst)
+                CLUSTER_INNER_IDX(src), CLUSTER_INNER_IDX(dst)
             ); // At its cluster (with its appropriate community id), should edges be stored.
 
         else // If it is not the case (not belongs to the same cluster)
             this->inter_cluster->doRecordSingleNeighbor(
-                COMMINUTY_INNER_IDX(src), COMMINUTY_INNER_IDX(dst)
+                CLUSTER_INNER_IDX(src), CLUSTER_INNER_IDX(dst)
             );
     } // so far, refactored former CommCSRBuilder::buildNeighborList
 
+    // When arranging, the addtional map_ variables were allocated to the heap.
+    // The map_ array is the identical one with the former edge_position and remains_ series.
+    //
+    // Thus, free them before handling the graph.
     inter_cluster->doReleaseLv2();
     for (auto& ic: this->intra_cluster) ic->doReleaseLv2();
     
@@ -101,7 +111,9 @@ unsigned cr2::CR2Graph::doRegisterEdge(const std::vector<cr2::Edge>& argEdgeList
 
 //
 // Releases all the memory held in this container.
-unsigned cr2::CR2Graph::doDestroy() {
+// Warning: Do not ever explicitly-call this function.
+// This will be done in dtor.
+unsigned cr2::CR2Graph::doRelease() {
 
     if (intra_cluster.size() != 0) // If there exists any community
         for (auto it: intra_cluster) delete it; // free
@@ -117,7 +129,8 @@ unsigned cr2::CR2Graph::doDestroy() {
 void cr2::CR2Graph::console_out_object_info() {
 
     printf("[cr2::CR2Graph]\n");
-    printf("    num_intra_cluster: %d\n", num_intra_cluster);
-    printf("    intra_cluster_community (size): %d\n", intra_cluster.size());
+    printf("    num_nodes: %d\n", num_nodes);
+    printf("    num_edges: %d\n", num_nodes);
+    printf("    num_intra_cluster: %d\n");
 }
 #endif

@@ -43,6 +43,7 @@ namespace cr2 {
             // Second index should be the log_degree: cr2::DEG_1 to cr2::DEG_32
             // Final index is the vertex id. Thus, the overall size will be, 2 * 6 * num_nodes.
 
+        // Data
         // Degree-ordered Subgraph
         cr2::CR2DegreeSubgraph<T> degree_subgraph[6];
             // DEG_1(0), DEG_2(1), DEG_4(2), DEG_8(3), DEG_16(4), DEG_32(5)
@@ -59,7 +60,7 @@ namespace cr2 {
 
         // Interface
         // Call in a sequence. 
-        // 1. doRegisterSingleDegree
+        // 1. doRegisterSingleDegree (Call with iterations)
         // 2. doBuildDegreeSubgraph
         // 3. doBuildVertexList
         unsigned doRecordSingleDegree(uint32_t, uint32_t);
@@ -67,11 +68,27 @@ namespace cr2 {
 
         unsigned doBuildDegreeSubgraph();
         unsigned doBuildVertexList();
-        unsigned doBuildEdgeList();
+        unsigned doBuildEdgeList() = delete;
 
         // Clearing meta data
-        unsigned doReleaseLv1();
+        unsigned doReleaseLv1() = delete;
         unsigned doReleaseLv2();
+
+        // Getter
+        // First arg: argDir (Direction; IN(0) or OUT(1))
+        uint32_t getNumNodes() { return this->num_nodes; };
+        uint32_t getNumEdges() { return this->num_edges; };
+
+        uint32_t getVertexDegrees(unsigned argDir, uint32_t argVid) { return vertex_degrees[argDir][argVid]; };
+        uint32_t getNumVirtualNodes(unsigned argDir) { return num_virtual_nodes[argDir]; }
+        
+        T* getVertexList(unsigned argDir) { return &vertex_list[argDir]; }
+        T* getEdgeList(unsigned argDir) { return &edge_list[argDir]; }
+
+        uint32_t getDegreeSubgraphSize(unsigned argDir, unsigned argDeg) { 
+            return degree_subgraph[argDeg].getNumVirtualNodes(argDir); 
+        }
+        
 
 #ifdef CONSOLE_OUT_ENABLE // Debugging purpose
         void console_out_object_info();
@@ -150,10 +167,13 @@ unsigned cr2::CR2Cluster<T>::doReleaseLv2() {
 
 // Interface
 // To fully function, the api should be called in a sequence.
+// 
 // 1. Call doRecordSingleDegree in iteration to count vertices' incoming/outgoing degrees.
 // 2. Then call doBuildDegreeSubgraph to generate metadata for the community
-// 3.
-// 4.
+// 3. The next call should be doBuildVertexList to generate vertex_list!! 
+// (former denseVertexIDList_in _out, sparseVetexIdList_in _out)
+// 4. Call doRecordSingleNeighbor in iteration to generate edge_list!! 
+// (former denseEdgeList_in _out, sparseEdgeList_in _out)
 
 //
 // Registers single degree. It receives single edge, (src, dst) for its argument.
@@ -348,26 +368,21 @@ unsigned cr2::CR2Cluster<T>::doBuildVertexList() { // Third step!!
 }
 
 
-
-template <class T>
-unsigned cr2::CR2Cluster<T>::doBuildEdgeList() { // Third step!!
-
-    
-
-
-}
-
-
-
-
 #ifdef CONSOLE_OUT_ENABLE // Debugging purpose
 template <class T>
 void cr2::CR2Cluster<T>::console_out_object_info() {
 
     printf("[cr2::CR2Cluster]\n");
     printf("    id: %d\n", id);
-    printf("    community size (node size): %d\n", vid_range[cr2::LOC::END] - vid_range[cr2::LOC::START]);
+    printf("    num_nodes: %d\n", this->num_nodes);
+    printf("    num_edges: %d\n", this->num_edges);
+    printf("    num_virtual_nodes: %d\n", this->num_virtual_nodes);
 
+    printf("    vertex_degrees[IN]:%d\n", this->vertex_degrees);
+    for (unsigned i = 0; i < num_nodes; i++) { printf("        %5d", this->vertex_degrees[IN][i]); }
+
+    printf("    vertex_degrees[OUT]:%d\n", this->vertex_degrees);
+    for (unsigned i = 0; i < num_nodes; i++) { printf("        %5d", this->vertex_degrees[OUT][i]); }
 }
 #endif
 #endif

@@ -22,7 +22,7 @@ namespace cr2 {
             unsigned num_original_nodes = 0; // Number of original graph's nodes
             unsigned num_edges = 0;
             unsigned num_virtual_nodes = 0; // Total number of virtual nodes
-            unsigned num_community = 0;
+            unsigned num_cluster = 0;
 
             // Core
             unsigned altCountNodes(const std::vector<cr2::Edge>&); 

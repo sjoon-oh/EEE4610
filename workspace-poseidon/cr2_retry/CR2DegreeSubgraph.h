@@ -60,7 +60,7 @@ namespace cr2 {
 
         // Interface
         unsigned getDegree() { return static_cast<unsigned>(degree); };
-        unsigned getNumVirtualNodes(unsigned argDir) { return num_virtual_nodes[argDir]; };
+        uint32_t getNumVirtualNodes(unsigned argDir) { return num_virtual_nodes[argDir]; };
 
         void setDegree(cr2::DEGREE argDeg) { degree = argDeg; };       
 

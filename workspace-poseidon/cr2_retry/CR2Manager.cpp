@@ -27,7 +27,6 @@ unsigned cr2::CR2Manager::altCountNodes(const std::vector<cr2::Edge>& argEdgeLis
 };
 
 
-
 //
 // Generates GR2Graph and returns the graph.
 // arg: const std::vector<cr2::Edge>&
@@ -38,18 +37,24 @@ cr2::CR2Graph* cr2::CR2Manager::doBuild(const std::vector<cr2::Edge>& argEdgeLis
     this->cr2_graph  = new cr2::CR2Graph(); // New dummy
     
     // Finding the maximum vertex id of the input graph
-    num_original_nodes = this->altCountNodes(argEdgeList) + 1;
-    num_edges = argEdgeList.size(); // Record the number of edges (original input graph)
+    this->num_original_nodes = this->altCountNodes(argEdgeList) + 1;
+    this->num_edges = argEdgeList.size(); // Record the number of edges (original input graph)
 
     // Calculate the number of community
     // Partition the nodes using the community size
-    num_community = (num_original_nodes % CLUSTER_SIZE != 0) ? 
-        num_original_nodes / CLUSTER_SIZE + 1 :
-        num_original_nodes / CLUSTER_SIZE;
+    this->num_cluster = 
+        (num_original_nodes % CLUSTER_SIZE != 0) ? 
+            num_original_nodes / CLUSTER_SIZE + 1 :
+            num_original_nodes / CLUSTER_SIZE;
+
+    // cr2_graph->setNumNodes(num_original_nodes);
+    // automatically records num_nodes of cr2_graph.
+    cr2_graph->setNumEdges(num_edges);
+    cr2_graph->setNumIntraCluster(num_cluster);
 
     // Generate the range of communities, not yet graph inserted.
     // Former DenseGraph/SparseGraph ctor.
-    cr2_graph->doRegisterCluster(num_community, num_original_nodes); 
+    cr2_graph->doRegisterCluster(num_cluster, num_original_nodes);
 
     // Now, start inserting the graph information.
     // Former countDegrees
@@ -76,6 +81,6 @@ void cr2::CR2Manager::console_out_object_info() {
     printf("    cr2_graph: %p\n", cr2_graph);
     printf("    num_original_nodes: %d\n", num_original_nodes);
     printf("    num_edges: %d\n", num_edges);
-    printf("    num_community: %d\n", num_community);
+    printf("    num_cluster: %d\n", num_cluster);
 }
 #endif
