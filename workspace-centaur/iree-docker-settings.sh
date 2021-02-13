@@ -24,6 +24,7 @@ wait
 cmake --build . --target check-mlir
 wait
 
+cd ~
 git clone https://github.com/google/iree
 
 cd ~/iree
