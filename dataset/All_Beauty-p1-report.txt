@@ -1,0 +1,26 @@
+
+Amazon Review Data: All_Beauty.json
+Keys 21 in total:
+ - : ['overall', 'verified', 'reviewTime', 'asin', 'unixReviewTime', 'vote', 'style/Format:', 'style/Size:', 'image', 'style/Size Name:', 'style/Flavor:', 'style/Style Name:', 'style/Scent Name:', 'style/Color:', 'style/Color Name:', 'style/Package Quantity:', 'style/Package Type:', 'style/Style:', 'style/Design:', 'style/Item Package Quantity:', 'style/Pattern:']
+Statistics:
+ - overall: 5
+ - verified: 2
+ - reviewTime: 5288
+ - asin: 32586
+ - unixReviewTime: 5288
+ - vote: 266
+ - style/Format:: 27
+ - style/Size:: 1847
+ - image: 8202
+ - style/Size Name:: 10
+ - style/Flavor:: 31
+ - style/Style Name:: 112
+ - style/Scent Name:: 347
+ - style/Color:: 1997
+ - style/Color Name:: 10
+ - style/Package Quantity:: 7
+ - style/Package Type:: 3
+ - style/Style:: 8
+ - style/Design:: 127
+ - style/Item Package Quantity:: 4
+ - style/Pattern:: 1

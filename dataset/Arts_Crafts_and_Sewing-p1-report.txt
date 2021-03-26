@@ -1,0 +1,41 @@
+
+Amazon Review Data: Arts_Crafts_and_Sewing.json
+Keys 36 in total:
+ - : ['overall', 'vote', 'verified', 'reviewTime', 'asin', 'style/Format:', 'unixReviewTime', 'image', 'style/Color:', 'style/Size:', 'style/Size Name:', 'style/Style:', 'style/Style Name:', 'style/Color Name:', 'style/Package Quantity:', 'style/Package Type:', 'style/Design:', 'style/Pattern:', 'style/Item Package Quantity:', 'style/Item Display Length:', 'style/Length:', 'style/Product Packaging:', 'style/Metal Type:', 'style/style name:', 'style/Material Type:', 'style/Display Height:', 'style/Edition:', 'style/Material:', 'style/Number of Items:', 'style/Scent:', 'style/Scent Name:', 'style/Overall Length:', 'style/Shape:', 'style/Item Display Weight:', 'style/Team Name:', 'style/Flavor:']
+Statistics:
+ - overall: 5
+ - vote: 471
+ - verified: 2
+ - reviewTime: 4876
+ - asin: 302809
+ - style/Format:: 37
+ - unixReviewTime: 4876
+ - image: 81213
+ - style/Color:: 26411
+ - style/Size:: 12432
+ - style/Size Name:: 169
+ - style/Style:: 737
+ - style/Style Name:: 2345
+ - style/Color Name:: 142
+ - style/Package Quantity:: 102
+ - style/Package Type:: 2
+ - style/Design:: 574
+ - style/Pattern:: 39
+ - style/Item Package Quantity:: 87
+ - style/Item Display Length:: 23
+ - style/Length:: 51
+ - style/Product Packaging:: 2
+ - style/Metal Type:: 7
+ - style/style name:: 26
+ - style/Material Type:: 76
+ - style/Display Height:: 2
+ - style/Edition:: 1
+ - style/Material:: 57
+ - style/Number of Items:: 21
+ - style/Scent:: 26
+ - style/Scent Name:: 14
+ - style/Overall Length:: 7
+ - style/Shape:: 6
+ - style/Item Display Weight:: 1
+ - style/Team Name:: 5
+ - style/Flavor:: 3

@@ -1,0 +1,28 @@
+
+Amazon Review Data: AMAZON_FASHION.json
+Keys 23 in total:
+ - : ['overall', 'verified', 'reviewTime', 'asin', 'unixReviewTime', 'vote', 'style/Color:', 'style/Size:', 'image', 'style/Metal Type:', 'style/Size Name:', 'style/Style:', 'style/Length:', 'style/Team Name:', 'style/Style Name:', 'style/Format:', 'style/Package Quantity:', 'style/Material:', 'style/Item Display Length:', 'style/Gem Type:', 'style/Item Package Quantity:', 'style/Scent Name:', 'style/Shape:']
+Statistics:
+ - overall: 5
+ - verified: 2
+ - reviewTime: 4608
+ - asin: 186189
+ - unixReviewTime: 4608
+ - vote: 200
+ - style/Color:: 11046
+ - style/Size:: 5168
+ - image: 28301
+ - style/Metal Type:: 68
+ - style/Size Name:: 67
+ - style/Style:: 924
+ - style/Length:: 50
+ - style/Team Name:: 61
+ - style/Style Name:: 15
+ - style/Format:: 11
+ - style/Package Quantity:: 5
+ - style/Material:: 2
+ - style/Item Display Length:: 2
+ - style/Gem Type:: 9
+ - style/Item Package Quantity:: 3
+ - style/Scent Name:: 1
+ - style/Shape:: 4
