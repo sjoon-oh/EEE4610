@@ -90,8 +90,8 @@ if __name__ == '__main__':
         with open('%s%s' % (args.fn.replace('.json', ''), '-p1'), 'w') as write_data:
             with open(args.fn, 'r') as read_data:
                 for line in read_data: 
-                    # _ = json.loads(line)
-                    _ = ast.literal_eval(line)
+                    _ = json.loads(line)
+                    #_ = ast.literal_eval(line)
                     
                     # Remove unnecessary traits
                     for attr in args.mrk:
